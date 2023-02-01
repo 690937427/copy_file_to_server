@@ -79,19 +79,7 @@ if __name__ == "__main__":
         if not os.path.exists('./log'):
             os.mkdir('./log')
         disk_lst = {
-            'Keyence': ['//10.178.14.150/Documents',
-                        '//10.54.5.130/atmo3_project_customer$/7_PAO5/07_Lab_Data/Keyence'],
-            'HFK': ['//10.178.14.151/HFK_folder',
-                    '//10.54.5.130/atmo3_project_customer$/7_PAO5/07_Lab_Data/HFK'],
-            'ATMO3-A': ['//10.178.14.250/ApplicationData',
-                        '//10.54.5.130/atmo3_project_customer$/7_PAO5/03_Production/300_'
-                        'Production_Files/50_trend_check/ATMO3-A/ApplicationData'],
-            'ATMO3-B': ['//10.178.14.249/ApplicationData',
-                        '//10.54.5.130/atmo3_project_customer$/7_PAO5/03_Production/300_'
-                        'Production_Files/50_trend_check/ATMO3-B'],
-            'ATMO3-C': ['//10.178.14.245/ApplicationData',
-                        '//10.54.5.130/atmo3_project_customer$/7_PAO5/03_Production/300_'
-                        'Production_Files/50_trend_check/ATMO3-C']
+            'put server information here'
         }
         for key, value in disk_lst.items():
             setup_filename = str(datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
