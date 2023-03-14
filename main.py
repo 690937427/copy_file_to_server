@@ -36,8 +36,8 @@ def ay_copy(args):
 def copy_files(to_path: str, from_path: str, update_dir: list, doc_name: str, pool_size: int = 5) -> None:
     pool = multiprocessing.Pool(processes=pool_size)
     for item in update_dir:
-        dest_path = to_path / item.relative_to(from_path).parent
-        dest_path.mkdir(parents=True, exist_ok=True)
+        dest_path = to_path + '/' + str(pathlib.Path(item).relative_to(from_path).parent)
+        pathlib.Path(dest_path).mkdir(parents=True, exist_ok=True)
         pool.apply_async(ay_copy, ((item, dest_path),))
     pool.close()
     pool.join()
@@ -51,22 +51,21 @@ if __name__ == "__main__":
     try:
         logging.info('Sync started!')
         pathlib.Path('./log').mkdir(exist_ok=True)
-        disk_lst = {'name': [pathlib.Path('from_place'), pathlib.Path('to_place')]}
-        '''disk_lst = {
-            'Keyence': [pathlib.Path('//10.178.14.150/Documents'),
-                        pathlib.Path('//10.54.5.130/atmo3_project_customer$/7_PAO5/07_Lab_Data/Keyence')],
-            'HFK': [pathlib.Path('//10.178.14.151/HFK_folder'),
-                    '//1pathlib.Path(0.54.5.130/atmo3_project_customer$/7_PAO5/07_Lab_Data/HFK'],
-            'ATMO3-A': [pathlib.Path('//10.178.14.250/ApplicationData'),
-                        pathlib.Path('//10.54.5.130/atmo3_project_customer$/7_PAO5/03_Production/300_'
-                                     'Production_Files/50_trend_check/ATMO3-A/ApplicationData')],
-            'ATMO3-B': [pathlib.Path('//10.178.14.249/ApplicationData'),
-                        pathlib.Path('//10.54.5.130/atmo3_project_customer$/7_PAO5/03_Production/300_'
-                                     'Production_Files/50_trend_check/ATMO3-B')],
-            'ATMO3-C': [pathlib.Path('//10.178.14.245/ApplicationData'),
-                        pathlib.Path('//10.54.5.130/atmo3_project_customer$/7_PAO5/03_Production/300_'
-                                     'Production_Files/50_trend_check/ATMO3-C')]
-        }  # 你需要根据实际情况修改'''
+        disk_lst = {
+            # 'Keyence': [pathlib.Path('//10.178.14.150/Documents'),
+            #             pathlib.Path('//10.54.5.130/atmo3_project_customer$/7_PAO5/07_Lab_Data/Keyence')],
+            'HFK': [pathlib.Path('//10.178.14.151/HFK_folder'),r'C:\Users\wqa7szh\Desktop\new_project\test']
+                    # '//1pathlib.Path(0.54.5.130/atmo3_project_customer$/7_PAO5/07_Lab_Data/HFK'],
+            # 'ATMO3-A': [pathlib.Path('//10.178.14.250/ApplicationData'),
+            #             pathlib.Path('//10.54.5.130/atmo3_project_customer$/7_PAO5/03_Production/300_'
+            #                          'Production_Files/50_trend_check/ATMO3-A/ApplicationData')],
+            # 'ATMO3-B': [pathlib.Path('//10.178.14.249/ApplicationData'),
+            #             pathlib.Path('//10.54.5.130/atmo3_project_customer$/7_PAO5/03_Production/300_'
+            #                          'Production_Files/50_trend_check/ATMO3-B')],
+            # 'ATMO3-C': [pathlib.Path('//10.178.14.245/ApplicationData'),
+            #             pathlib.Path('//10.54.5.130/atmo3_project_customer$/7_PAO5/03_Production/300_'
+            #                          'Production_Files/50_trend_check/ATMO3-C')]
+        }  # 你需要根据实际情况修改
         for key, (from_path, to_path) in disk_lst.items():
             setup_filename = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
             setup_file_path = pathlib.Path(f'./log/{setup_filename}.txt')
