@@ -1,105 +1,71 @@
 import datetime
-import os
-import time
-import shutil
+import logging
 import multiprocessing
-from multiprocessing import freeze_support
+import pathlib
+import shutil
+import time
+
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 
-def getfile(root_dir, log_file_path, allfiles=None):
-    if allfiles is None:
-        allfiles = {}
-    files = os.listdir(root_dir)
-    for file in files:
-        path = root_dir + '/' + file
-        if not os.path.isdir(path):
-            allfiles[path] = os.stat(path).st_mtime
-            with open(log_file_path, 'a', encoding='utf-8') as a:
-                a.write('%s|%f\n' % (path, allfiles[path]))
-        else:
-            getfile(path, log_file_path)
-    return allfiles
+def get_files(root_dir: str, log_file_path: pathlib.Path) -> dict:
+    all_files = {}
+    for path in pathlib.Path(root_dir).rglob('*'):
+        if path.is_file():
+            all_files[path] = path.stat().st_mtime
+            with log_file_path.open('a', encoding='utf-8') as a:
+                print(f"{path}|{all_files[path]:.6f}", file=a)
+    return all_files
 
 
-def compare_log(doc_name, update=None):
-    if update is None:
-        update = []
-    if not os.path.exists('./log/IO-%s.txt' % doc_name):
-        r = open('./log/IO-%s.txt' % doc_name, 'w')
-        r.close()
-    with open('./log/IO-%s.txt' % doc_name, 'r', encoding='utf-8') as r:
-        txt = r.readlines()
-    my_dir = {}
-    for row in txt:
-        (key, value) = row.split('|')
-        my_dir[key] = value.replace('\n', '')
-    my_dir2 = {}
-    with open(setup_file_path, 'r', encoding='utf-8') as r:
-        txt = r.readlines()
-    for row in txt:
-        (key, value) = row.split('|')
-        my_dir2[key] = value.replace('\n', '')
-    keys = set(list(my_dir.keys()) + list(my_dir2.keys()))
-    for k in keys:
-        try:
-            if my_dir2[k] != my_dir[k]:
-                update.append(k)
-        except KeyError:
-            update.append(k)
-    return update
+def compare_log(doc_name: str, setup_file_path: pathlib.Path) -> list:
+    with setup_file_path.open('r', encoding='utf-8') as r:
+        my_dir2 = dict(row.strip().split('|') for row in r)
+    with pathlib.Path(f'./log/IO-{doc_name}.txt').open('r', encoding='utf-8') as r:
+        my_dir = dict(row.strip().split('|') for row in r)
+    diff = set(my_dir.keys()) ^ set(my_dir2.keys())
+    return [k for k in diff if k not in my_dir or k not in my_dir2 or my_dir2[k] != my_dir[k]]
 
 
-def ay_copy(from_path, to_path):
+def ay_copy(args):
+    from_path, to_path = args
     shutil.copy(from_path, to_path)
-    print('%s finished' % (os.path.basename(from_path)))
+    logging.info(f"{from_path.name} copied")
 
 
-def copy_file(_to_path, _from_path, _update_dir, doc_name):
-    po = multiprocessing.Pool(processes=5)
-    # q = multiprocessing.Manager().Queue()
-    for item in _update_dir:
-        new_path = os.path.dirname(item).replace(_from_path, _to_path)
-        try:
-            os.makedirs(new_path)
-        except PermissionError and FileExistsError:
-            pass
-        # shutil.copy(item, new_path)
-        po.apply_async(ay_copy, (item, new_path))
-    po.close()
-    po.join()
-    os.remove('./log/IO-%s.txt' % doc_name)
-    shutil.copy(setup_file_path, os.path.join(os.path.dirname(setup_file_path), 'IO-%s.txt' % doc_name))
+def copy_files(to_path: str, from_path: str, update_dir: list, doc_name: str, pool_size: int = 5) -> None:
+    pool = multiprocessing.Pool(processes=pool_size)
+    for item in update_dir:
+        dest_path = to_path / item.relative_to(from_path).parent
+        dest_path.mkdir(parents=True, exist_ok=True)
+        pool.apply_async(ay_copy, ((item, dest_path),))
+    pool.close()
+    pool.join()
+    log_file_path = pathlib.Path(f'./log/IO-{doc_name}.txt')
+    if log_file_path.exists():
+        log_file_path.unlink()
+    shutil.copy(setup_file_path, setup_file_path.parent / f'IO-{doc_name}.txt')
 
 
 if __name__ == "__main__":
     try:
-        freeze_support()
-        print(time.process_time())
-        # 创建以时间命名的日志文件并读取当前的文件状态
-        if not os.path.exists('./log'):
-            os.mkdir('./log')
-        disk_lst = {
-            'put server information here'
-        }
-        for key, value in disk_lst.items():
-            setup_filename = str(datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
-            setup_file_path = '%s%s.txt' % ('./log/', setup_filename)
-            f = open(setup_file_path, 'w', encoding='utf-8')
-            f.close()
-            print('start loop %s' % key)
-            from_path = value[0]
-            to_path = value[1]
-            getfile(from_path, setup_file_path)
-            print('file got!')
-            print(time.process_time())
-            print('start compare!')
-            update_dir = compare_log(key)
-            print('compare finished')
-            print(time.process_time())
-            print('start copy!')
-            copy_file(to_path, from_path, update_dir, key)
-            print(time.process_time())
+        logging.info('Sync started!')
+        pathlib.Path('./log').mkdir(exist_ok=True)
+        disk_lst = {'ip': [pathlib.Path('from_place'), pathlib.Path('to_place')]}  # 需要根据实际情况修改
+        for key, (from_path, to_path) in disk_lst.items():
+            setup_filename = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+            setup_file_path = pathlib.Path(f'./log/{setup_filename}.txt')
+            setup_file_path.touch()
+            logging.info(f"Start syncing {key}")
+            all_files = get_files(from_path, setup_file_path)
+            logging.info('Files scanned!')
+            logging.info('Start comparing!')
+            update_dir = compare_log(key, setup_file_path)
+            logging.info('Comparison finished!')
+            logging.info('Start copying!')
+            copy_files(to_path, from_path, update_dir, key)
+            logging.info('Sync finished!')
             time.sleep(5)
     except Exception as ex:
-        print('%s' % ex)
+        logging.exception(f'{ex}')
         time.sleep(5)
