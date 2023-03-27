@@ -1,0 +1,20 @@
+{
+  "Keyence":[
+    "\\\\10.178.14.150\\Documents",
+    "\\\\10.54.5.130\\atmo3_project_customer$\\7_PAO5\\07_Lab_Data\\Keyence"
+  ],
+  "HFK": ["\\\\10.178.14.151\\HFK_folder",
+                    "\\\\10.54.5.130\\atmo3_project_customer$\\7_PAO5\\07_Lab_Data\\HFK"],
+  "ATMO3-A": [
+    "\\\\10.178.14.250\\ApplicationData",
+    "\\\\10.54.5.130\\atmo3_project_customer$\\7_PAO5\\03_Production\\300_Production_Files\\50_trend_check\\ATMO3-A\\ApplicationData"
+  ],
+  "ATMO3-B": [
+    "\\\\10.178.14.249\\ApplicationData",
+    "\\\\10.54.5.130\\atmo3_project_customer$\\7_PAO5\\03_Production\\300_Production_Files\\50_trend_check\\ATMO3-B"
+  ],
+  "ATMO3-C": [
+    "\\\\10.178.14.245\\ApplicationData",
+    "\\\\10.54.5.130\\atmo3_project_customer$\\7_PAO5\\03_Production\\300_Production_Files\\50_trend_check\\ATMO3-C"
+  ]
+}
